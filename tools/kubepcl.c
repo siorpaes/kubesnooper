@@ -1,3 +1,12 @@
+/** \file kubepcl.c
+ * \author david.siorpaes@gmail.com
+ * 
+ * Decodes Custom KubeII PCL printer files
+ * 
+ * PCL file can be captured from real printer using tcpdump/wireshark
+ * or can be dumped with netcat redirecting the printer to localhost
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
