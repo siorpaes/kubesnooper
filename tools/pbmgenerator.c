@@ -32,7 +32,15 @@ int paint(int x, int y, char* p)
 
     /* Line */
     if(strcmp(p, "l") == 0){
-        if(y ==x )
+        if(y == x )
+            pixel = 1;
+        else
+            pixel = 0;
+    }
+
+    /* Upper left 8x8 cube */
+    if(strcmp(p, "c") == 0){
+        if((x < 8) && (y < 8))
             pixel = 1;
         else
             pixel = 0;
