@@ -31,6 +31,7 @@ int main(int argc, char** argv)
 {
     char* fileaddr;
     int filefd, cursor, rasterlen, match, i;
+    int line;
     struct stat in_stat;
 
     if(argc != 2){
@@ -52,12 +53,15 @@ int main(int argc, char** argv)
 
     /* Parse the PCL file */
     cursor = 0;
+    line = 1;
     while(cursor <= in_stat.st_size){
         if(fileaddr[cursor] == 0x1b){
             cursor++;
             match = sscanf(fileaddr+cursor, "*b%iW", &rasterlen);
+
+            /* E*#W pattern is matched */
             if((match == 1) && (fileaddr[cursor+2+ndigits(rasterlen)]) == 'W'){
-                printf("%x: ", cursor);
+                printf("%i %04x: ", line++, cursor);
                 cursor += (2 + ndigits(rasterlen) + 1);
                 for(i=0; i<rasterlen; i++){
                     printf("%02x ", fileaddr[cursor+i] & 0xff);
