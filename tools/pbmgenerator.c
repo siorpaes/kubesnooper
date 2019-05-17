@@ -46,6 +46,23 @@ int paint(int x, int y, char* p)
             pixel = 0;
     }
 
+    /* Alternate vertical lines */
+    if(strcmp(p, "vl") == 0){
+        if( x & 1)
+            pixel = 1;
+        else
+            pixel = 0;
+    }
+
+    /* Alternate horizontal lines */
+    if(strcmp(p, "hl") == 0){
+        if( y & 1)
+            pixel = 1;
+        else
+            pixel = 0;
+    }
+
+
     return pixel;
 }
 
