@@ -33,12 +33,14 @@ int main(int argc, char** argv)
     int filefd, cursor, rasterlen, match, i;
     int line;
     struct stat in_stat;
+    char argument, command;
 
     if(argc != 2){
         fprintf(stderr, "Usage: %s <File name>\n", argv[0]);
         return -EINVAL;
     }
 
+    /* Open and mmap file */
     if((filefd = open(argv[1], O_RDONLY)) < 0) {
         fprintf(stderr, "Failed to open %s: %s\n", argv[1], strerror(errno));
         return errno;
@@ -55,12 +57,16 @@ int main(int argc, char** argv)
     cursor = 0;
     line = 1;
     while(cursor <= in_stat.st_size){
+
+        /* Match ESC */
         if(fileaddr[cursor] == 0x1b){
             cursor++;
-            match = sscanf(fileaddr+cursor, "*b%iW", &rasterlen);
 
-            /* E*#W pattern is matched */
-            if((match == 1) && (fileaddr[cursor+2+ndigits(rasterlen)]) == 'W'){
+            /* Match PCL command */
+            match = sscanf(fileaddr+cursor, "*%c%i%c", &command, &rasterlen, &argument);
+
+            /* ESC*b#W command is matched: decode raster */
+            if((match == 3) && (command == 'b') && (argument == 'W')){
                 printf("%i %04x: ", line++, cursor);
                 cursor += (2 + ndigits(rasterlen) + 1);
                 for(i=0; i<rasterlen; i++){
