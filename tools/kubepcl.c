@@ -5,8 +5,8 @@
  * TODO
  * -Make it more rubust against overflows in compressed data decoding
  * -Compute PAGE_HEIGTH
- * -Support vertical absolute positioning command ESC*p#Y
  * -Enable debugging flags
+ * -Clean up variable names
  * -Add more documentation
  * 
  * PCL file can be captured from real printer using tcpdump/wireshark
@@ -86,11 +86,29 @@ int decodeRaster(char* pcl, int rasterlen, int compressed)
     return 0;
 }
 
+
+int emitEmptyLines(int nlines)
+{
+    int i;
+
+    if(nlines > 0){
+        while(nlines--){
+            for(i=0; i<PAGE_WIDTH; i++)
+                printf("0 ");
+            printf("\n");
+        }
+    }
+
+    return 0;
+}
+
+
 int main(int argc, char** argv)
 {
     char* fileaddr;
     int filefd, cursor, rasterlen, match;
     int compressed;
+    int currentLine;
     struct stat in_stat;
     char argument, command;
 
@@ -120,6 +138,7 @@ int main(int argc, char** argv)
     /* Parse the PCL file */
     cursor = 0;
     compressed = 0;
+    currentLine = 0;
     while(cursor <= in_stat.st_size){
 
         /* Match ESC */
@@ -134,6 +153,7 @@ int main(int argc, char** argv)
                 cursor += (2 + ndigits(rasterlen) + 1);
                 decodeRaster(&fileaddr[cursor], rasterlen, compressed);
                 cursor += rasterlen;
+                currentLine++;
             }
             /* ESC*b#M is matched: change compression format */
             else if((match == 3) && (command == 'b') && (argument == 'M')){
@@ -152,6 +172,13 @@ int main(int argc, char** argv)
 
                 cursor += (2 + ndigits(rasterlen) + 1);
 
+            }
+            /* ESC *p#Y is matched: go ahead with vertical position */
+            else if((match == 3) && (command == 'p') && (argument == 'Y')){
+                fprintf(stderr, "Current line: %i. Setting YPOS to %i\n", currentLine, rasterlen);
+                emitEmptyLines(rasterlen - currentLine);
+                currentLine = rasterlen;
+                cursor += (2 + ndigits(rasterlen) + 1);
             }
             else{
                 cursor++;
