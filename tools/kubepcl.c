@@ -19,12 +19,65 @@
 #include <errno.h>
 #include <stdint.h>
 
+#define PAGE_WIDTH 640
+
 /* Returns the number of digits of a number */
 int ndigits(int digit)
 {
     char buf[16];
     sprintf(buf, "%u", digit);
     return strlen(buf);
+}
+
+/* Emit PBM data */
+int sbit(char data)
+{
+    int i;
+
+    for(i=0; i<8; i++){
+        printf("%i ", (data>>(7-i)) & 1);
+    }
+
+    return 0;
+}
+
+/* Decodes PCL raster inclusing Custom Kube */
+int decodeRaster(char* pcl, int rasterlen, int compressed)
+{
+    int i, j, decodedColumns;
+
+    decodedColumns = 0;
+
+    /* Jus emit uncomressed raster */
+    if(compressed == 0){
+        for(i=0; i<rasterlen; i++){
+            sbit(pcl[i]);
+            decodedColumns+=8;
+        }
+    }
+    /* Emit compressed raster */
+    else{
+        for(i=0; i<rasterlen; i++){
+            sbit(pcl[i]);
+            decodedColumns += 8;
+
+            if(pcl[i+1] == pcl[i]){
+                for(j=0; j<pcl[i+2]-1; j++){
+                    sbit(pcl[i]);
+                    decodedColumns += 8;
+                }
+                i+=2;
+            }
+        }
+    }
+
+    /* Pad row with zeroes */
+    for(i=0; i<PAGE_WIDTH-decodedColumns; i++)
+        printf("0 ");
+
+    printf("\n");
+
+    return 0;
 }
 
 int main(int argc, char** argv)
@@ -53,6 +106,11 @@ int main(int argc, char** argv)
         return errno;
     }
 
+    /* Emit PBM header */
+    printf("P1\n");
+    printf("%i %i\n", 640, 640);
+
+
     /* Parse the PCL file */
     cursor = 0;
     line = 1;
@@ -67,13 +125,9 @@ int main(int argc, char** argv)
 
             /* ESC*b#W command is matched: decode raster */
             if((match == 3) && (command == 'b') && (argument == 'W')){
-                printf("%i %04x: ", line++, cursor);
                 cursor += (2 + ndigits(rasterlen) + 1);
-                for(i=0; i<rasterlen; i++){
-                    printf("%02x ", fileaddr[cursor+i] & 0xff);
-                }
+                decodeRaster(&fileaddr[cursor], rasterlen, 1);
                 cursor += rasterlen;
-                printf("\n");
             }
             else{
                 cursor++;
