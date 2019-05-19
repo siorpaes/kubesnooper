@@ -4,7 +4,6 @@
  * Decodes Custom KubeII PCL printer files, including proprietary ESC*b2M compression.
  * TODO
  * -Make it more rubust against overflows in compressed data decoding
- * -Compute PAGE_HEIGTH
  * -Enable debugging flags
  * -Add more documentation
  * 
@@ -25,6 +24,8 @@
 #include <stdint.h>
 
 #define PAGE_WIDTH 640
+#define BUFLEN (16*1024*1024)
+FILE* outputFile;
 
 /* Returns the number of digits of a number */
 int ndigits(int digit)
@@ -40,7 +41,7 @@ int sbit(char data)
     int i;
 
     for(i=0; i<8; i++){
-        printf("%i ", (data>>(7-i)) & 1);
+        fprintf(outputFile, "%i ", (data>>(7-i)) & 1);
     }
 
     return 0;
@@ -78,9 +79,9 @@ int decodeRaster(char* pcl, int rasterlen, int compressed)
 
     /* Pad row with zeroes */
     for(i=0; i<PAGE_WIDTH-decodedColumns; i++)
-        printf("0 ");
+        fprintf(outputFile, "0 ");
 
-    printf("\n");
+    fprintf(outputFile, "\n");
 
     return 0;
 }
@@ -93,8 +94,8 @@ int emitEmptyLines(int nlines)
     if(nlines > 0){
         while(nlines--){
             for(i=0; i<PAGE_WIDTH; i++)
-                printf("0 ");
-            printf("\n");
+                fprintf(outputFile, "0 ");
+            fprintf(outputFile, "\n");
         }
     }
 
@@ -111,8 +112,8 @@ int main(int argc, char** argv)
     struct stat in_stat;
     char cArgument, command;
 
-    if(argc != 2){
-        fprintf(stderr, "Usage: %s <File name>\n", argv[0]);
+    if(argc != 3){
+        fprintf(stderr, "Usage: %s <PCL input file name> <PBM output file name>\n", argv[0]);
         return -EINVAL;
     }
 
@@ -129,10 +130,16 @@ int main(int argc, char** argv)
         return errno;
     }
 
-    /* Emit PBM header */
-    printf("P1\n");
-    printf("%i %i\n", 640, 640);
+    /* Open output file */
+    outputFile = fopen(argv[2], "w");
+    if(outputFile == NULL){
+        fprintf(stderr, "Error opening output file: %s\n", strerror(errno));
+        exit(errno);
+    }
 
+    /* Emit PBM header. Leave space for page heigth which we don't know yet */
+    fprintf(outputFile, "P1\n");
+    fprintf(outputFile, "%i  1000                \n", PAGE_WIDTH);
 
     /* Parse the PCL file */
     cursor = 0;
@@ -187,6 +194,13 @@ int main(int argc, char** argv)
             cursor++;
         }
     }
+
+    /* Total number of lines is now known: emit correct header */
+    fseek(outputFile, 0, SEEK_SET);
+    fprintf(outputFile, "P1\n");
+    fprintf(outputFile, "%i %i\n", PAGE_WIDTH, currentLine);
+
+    fclose(outputFile);
 
     return 0;
 }
