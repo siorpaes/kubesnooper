@@ -6,7 +6,6 @@
  * -Make it more rubust against overflows in compressed data decoding
  * -Compute PAGE_HEIGTH
  * -Enable debugging flags
- * -Clean up variable names
  * -Add more documentation
  * 
  * PCL file can be captured from real printer using tcpdump/wireshark
@@ -106,11 +105,11 @@ int emitEmptyLines(int nlines)
 int main(int argc, char** argv)
 {
     char* fileaddr;
-    int filefd, cursor, rasterlen, match;
+    int filefd, cursor, iArgument, match;
     int compressed;
     int currentLine;
     struct stat in_stat;
-    char argument, command;
+    char cArgument, command;
 
     if(argc != 2){
         fprintf(stderr, "Usage: %s <File name>\n", argv[0]);
@@ -146,39 +145,39 @@ int main(int argc, char** argv)
             cursor++;
 
             /* Match PCL command */
-            match = sscanf(fileaddr+cursor, "*%c%i%c", &command, &rasterlen, &argument);
+            match = sscanf(fileaddr+cursor, "*%c%i%c", &command, &iArgument, &cArgument);
 
             /* ESC*b#W command is matched: decode raster */
-            if((match == 3) && (command == 'b') && (argument == 'W')){
-                cursor += (2 + ndigits(rasterlen) + 1);
-                decodeRaster(&fileaddr[cursor], rasterlen, compressed);
-                cursor += rasterlen;
+            if((match == 3) && (command == 'b') && (cArgument == 'W')){
+                cursor += (2 + ndigits(iArgument) + 1);
+                decodeRaster(&fileaddr[cursor], iArgument, compressed);
+                cursor += iArgument;
                 currentLine++;
             }
             /* ESC*b#M is matched: change compression format */
-            else if((match == 3) && (command == 'b') && (argument == 'M')){
-                if(rasterlen == 2){
+            else if((match == 3) && (command == 'b') && (cArgument == 'M')){
+                if(iArgument == 2){
                     compressed = 1;
                     fprintf(stderr, "Compression activated\n");
                 }
-                else if(rasterlen == 0){
+                else if(iArgument == 0){
                     compressed = 0;
                     fprintf(stderr, "No compression\n");
                 }
                 else{
                     compressed = 1;
-                    fprintf(stderr, "Warning!!! Unkown comression format %i\n", rasterlen);
+                    fprintf(stderr, "Warning!!! Unkown comression format %i\n", iArgument);
                 }
 
-                cursor += (2 + ndigits(rasterlen) + 1);
+                cursor += (2 + ndigits(iArgument) + 1);
 
             }
             /* ESC *p#Y is matched: go ahead with vertical position */
-            else if((match == 3) && (command == 'p') && (argument == 'Y')){
-                fprintf(stderr, "Current line: %i. Setting YPOS to %i\n", currentLine, rasterlen);
-                emitEmptyLines(rasterlen - currentLine);
-                currentLine = rasterlen;
-                cursor += (2 + ndigits(rasterlen) + 1);
+            else if((match == 3) && (command == 'p') && (cArgument == 'Y')){
+                fprintf(stderr, "Current line: %i. Setting YPOS to %i\n", currentLine, iArgument);
+                emitEmptyLines(iArgument - currentLine);
+                currentLine = iArgument;
+                cursor += (2 + ndigits(iArgument) + 1);
             }
             else{
                 cursor++;
