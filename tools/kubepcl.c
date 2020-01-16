@@ -47,7 +47,7 @@ int sbit(char data)
     return 0;
 }
 
-/* Decodes PCL raster inclusing Custom KubeII compressed format */
+/* Decodes PCL raster including Custom KubeII compressed format */
 int decodeRaster(char* pcl, int rasterlen, int compressed)
 {
     int i, j, decodedColumns;
