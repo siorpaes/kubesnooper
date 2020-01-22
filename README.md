@@ -4,7 +4,10 @@ The main goal is to collect 'real' data sent to the printers so to figure out th
 The first step is to collect all data sent to the Custom Kube printers. Usually printers IP addresses are static and set once and forever.
 
 To find all IPs use the well known nmap tool as follows:
+
     nmap -sn 192.168.1.0/24
+
+This for example is the mapping of my printers:
 
 * 192.168.1.50       Stampante Bar
 * 192.168.1.100      PC cassa
@@ -14,7 +17,7 @@ The first thing to do in order to capture all printer's data is to hook to your 
 
     tcpdump -i eth0 -n -w birramedia.pcap port 9100
 
-You can easily script above command to collect dumps on a daily basis using for example a Raspberry board.
+You can easily script above command to aotimatically collect dumps on a daily basis using for example a Raspberry board.
 Custom printers listen TCP port 9100 and accept 'raw' protocol. Installed Windows driver reports 'Custom Kube 80mm 200dpi'. Such protocol just carries raw binary data as it would be transmitted over parallel port LPTx.
 To extract such binary data you can use Wireshark decoding facilities or just use command line `chaosreader` tool as follows:
 

@@ -1,5 +1,11 @@
 #!/usr/bin/perl
 # Runs tcpdump on a daily basis and posts the generatad dump file to a server
+# Takes as first argument the path where to store dump files
+# If not path is provided dumps to local directory
+# Author: david.siorpaes@gmail.com 
+#
+# Usage:
+# ./rpidumper /path/to/dumpfiles
 
 use strict;
 use warnings;
@@ -10,6 +16,13 @@ sub midnight_seconds {
    my $secs = ($time[2] * 3600) + ($time[1] * 60) + $time[0];
 
    return $secs;
+}
+
+# Take dumps path. Default to local directory
+my $dumppath = $ARGV[0];
+if(not defined $dumppath){
+   print("Using default dir\n");
+   $dumppath = ".";
 }
 
 while(1){
@@ -24,7 +37,7 @@ while(1){
    $year += 1900;
    my $time = sprintf ("%02d:%02d:%02d", $hour, $min, $sec);
 
-   my $filename = "$days[$wday]-$mday-$months[$mon]-$year--$time.pcap";
+   my $filename = $dumppath . "/$months[$mon]-$mday-$year-$days[$wday]--$time.pcap";
    print "Dumping to: " . $filename . "\n";
 
    # Prepare and execute tcpdump command
