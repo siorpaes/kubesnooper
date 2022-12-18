@@ -1,4 +1,4 @@
-# rsnooper
+# Custom printers snooper
 This is a collection of tools meant to log and post-process Custom Kube printers Ethernet captures.
 The main goal is to collect 'real' data sent to the printers so to figure out the actual goods that have been ordered (and hopefully) paid.
 The first step is to collect all data sent to the Custom Kube printers. Usually printers IP addresses are static and set once and forever.
